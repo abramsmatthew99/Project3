@@ -1,0 +1,51 @@
+package v1;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+/**
+ * 
+ * @author Matt Abrams
+ * 
+ * A class that encrypts a message using RSA and with 2 character blocks
+ *
+ */
+public class Person {
+	
+	long e;
+	long m;
+	long d;
+	
+	
+	public Person() {
+		int p = RSA.randomPrime(256, 1048576);
+		int q = RSA.randomPrime(256,  1048576);
+		m = p * q;
+		long n = (p-1) * (q-1);
+		e = RSA.relPrime(n);
+		d = RSA.getInverse(e, n);
+	}
+	
+	public long[] encryptTo(String msg, Person recipient) {
+		ArrayList<Long> cipher = new ArrayList<Long>();
+		char[] msgArr = msg.toCharArray();
+		//Pad if necessary
+		if (msgArr.length % 2 != 0) {
+			msgArr = Arrays.copyOf(msgArr, msgArr.length + 1);
+		}
+		for (int i = 0; i < msgArr.length; i += 2) {
+			long textVal = RSA.toLong(msg, i);
+			cipher.add(RSA.power(textVal, e, m));
+		}
+		return cipher.stream().mapToLong(i -> i).toArray();
+	}
+	
+	public String decrypt(long[] message) {
+		StringBuilder msg = new StringBuilder();
+		for (long block : message) {  
+			long decryptBlock = RSA.power(block, d, m);
+			msg.append(RSA.longTo2Chars(decryptBlock));
+		}
+		return msg.toString();
+		
+	}
+}
